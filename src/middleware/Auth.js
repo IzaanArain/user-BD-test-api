@@ -11,30 +11,30 @@ const user_token_auth = async (req, res, next) => {
   //   token = authorization.split(" ")[1];
 
   const token = req.headers["authorization"]?.split(" ")[1];
+  console.log("header: ",token)
   const auth = await User.findOne({ userAuth: token });
-
+  console.log("userAuth",auth.userAuth)
+  try{
   if (!token) {
-    res.status(400).send({
-      message: "token does not exist,must have a token",
-      status: 400,
-    });
-  } else if (auth?.user_authentication !== token) {
-    return res.send({ message: "token does not matched", status: 400 });
+    res.status(400);
+    throw new Error("token does not exist,must have a token");
+  } 
+  else if (auth?.userAuth !== token) {
+    res.status(400);
+    throw new Error("token does not matched");
   } else if (auth?.isBlocked === true) {
-    return res.send({
-      message: `Dear ${auth?.name} your account is temporaray blocked`,
-      status: 400,
-    });
+    res.status(400);
+    throw new Error(`Dear ${auth?.name} your account is temporaray blocked`);
   }
 
-  try{
+ 
     const decoded=jwt.verify(token,process.env.SECRET_TOKEN);
     req.id=decoded.id
     next()
   }catch(err){
-    res.status(400).send("Invalid token.");
+    console.error("Error", `${err.message}`.red);
+    res.send({ Error: err.message });
   }
-  return next;
 };
 
 module.exports=user_token_auth;
