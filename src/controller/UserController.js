@@ -59,6 +59,22 @@ const getUser = async (req, res) => {
 const addUser = async (req, res) => {
   const { name, email, password, phone, status, isBlocked } = req.body;
   try {
+    if(!password){
+      res.status(401);
+      throw new Error("please enter your name");
+    }
+    if(!email){
+      res.status(401);
+      throw new Error("please enter your email");
+    }
+    if(!password){
+      res.status(401);
+      throw new Error("please enter your pasword");
+    }
+    if(!phone){
+      res.status(401);
+      throw new Error("please enter your phone number");
+    }
     if (!name | !email | !password | !phone) {
       res.status(401);
       throw new Error("all fields are mandatory");
@@ -73,12 +89,12 @@ const addUser = async (req, res) => {
 
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
-      throw new Error("not a valid Email");
+      throw new Error("Please enter a valid email");
     }
     if (
       !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
       res.status(400);
-      throw new Error("not a valid password");
+      throw new Error("Password should include at least 8 characters, one uppercase letter, one lowercase letter, one digit, and one special character.");
     }
     if (!phone.match(/^[0-9]{11}$/)) {
       res.status(400);
@@ -107,12 +123,21 @@ const addUser = async (req, res) => {
     res.send({ Error: err.message });
   }
 };
+
 //@desc login a user
 //@route POST /api/v1/users/login
 //@access Private
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
+    if(!email){
+      res.status(401);
+      throw new Error("please enter email");
+    }
+    if(!password){
+      res.status(401);
+      throw new Error("please enter password");
+    }
     if (!email | !password) {
       res.status(401);
       throw new Error("both email and password are mandatory");
@@ -169,6 +194,7 @@ const loginUser = async (req, res) => {
     res.send({ Error: err.message });
   }
 };
+
 //@desc update a user
 //@route PUT /api/v1/users/create
 //@access Private
@@ -194,7 +220,18 @@ const updateUser = async (req, res) => {
       res.status(403);
       throw new Error("user is not update this user");
     }
-
+    if(!password){
+      res.status(401);
+      throw new Error("please enter your name");
+    }
+    if(!email){
+      res.status(401);
+      throw new Error("please enter your email");
+    }
+    if(!password){
+      res.status(401);
+      throw new Error("please enter your pasword");
+    }
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
       throw new Error("not a valid Email");
