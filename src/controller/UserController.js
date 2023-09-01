@@ -190,11 +190,25 @@ const updateUser = async (req, res) => {
       //   message:'user not authorized',
       // })
     }
-    console.log(user._id);
     if (user._id.toString() !== id.toString()) {
       res.status(403);
-      throw new Error("user is not authorized to delete this event");
+      throw new Error("user is not update this user");
     }
+
+    if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+      res.status(400);
+      throw new Error("not a valid Email");
+    }
+    if (
+      !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
+      res.status(400);
+      throw new Error("not a valid password");
+    }
+    if (!phone.match(/^[0-9]{11}$/)) {
+      res.status(400);
+      throw new Error("Phone number must have 11 digits");
+    }
+    
     const updateUser = await Users.findByIdAndUpdate(
       { _id: id },
       { ...req.body },
