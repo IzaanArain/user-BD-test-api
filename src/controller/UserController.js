@@ -41,7 +41,11 @@ const getUser = async (req, res) => {
       throw new Error("you is not authorized view this user");
     }
 
-    res.status(200).send({ user });
+    return res.status(200).send({
+      status:1,
+      message:"user created successfully",
+      user
+    });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
     res.send({ Error: err.message });
@@ -77,7 +81,12 @@ const addUser = async (req, res) => {
       status,
       isBlocked,
     });
-    res.status(200).send({ message: "user created successfully", user });
+    // res.status(200).send({ message: "user created successfully", user });
+   return res.status(200).send({
+      status:1,
+      message:"user created successfully",
+      user
+    });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
     res.send({ Error: err.message });
@@ -141,6 +150,8 @@ const loginUser = async (req, res) => {
 //@route PUT /api/v1/users/create
 //@access Private
 const updateUser = async (req, res) => {
+  // const {id}=req.params;
+  const {id}=req.id
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(404);
@@ -151,11 +162,26 @@ const updateUser = async (req, res) => {
     if (!user) {
       res.status(404);
       throw new Error("User not found");
+      // return res.status(401).send({
+      //   status:1,
+      //   message:'user not authorized',   
+      // })
     }
     if (user._id.toString() !== req.id.toString()) {
       res.status(403);
       throw new Error("user is not authorized to delete this event");
     }
+    const updateUser=await Users.findByIdAndUpdate(
+      {_id:id},
+      {...req.body},
+      {new:true}
+    );
+
+    return res.status(200).send({
+      status:1,
+      message:'user has been updated',
+      data: updateUser
+    })
   } catch (err) {
     console.error("Error", `${err.message}`.red);
     res.send({ Error: err.message });
@@ -166,7 +192,8 @@ const updateUser = async (req, res) => {
 //@route DELETE /api/v1/users/delete
 //@access Private
 const deleteUser = async (req, res) => {
-  const { id } = req.params;
+  // const { id } = req.params;
+  const {id}=req.id
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(404);
@@ -178,13 +205,18 @@ const deleteUser = async (req, res) => {
       res.status(404);
       throw new Error("User not found");
     }
-    if (user._id.toString() !== req.id.toString()) {
+    if (user._id.toString() !== id.toString()) {
       res.status(403);
       throw new Error("user is not authorized to delete this event");
     }
 
     const deleteUser = await Users.findByIdAndDelete({ id });
-    res.status(200).send({ message: `deleted user sucessfully at ID:${id}`,user:deleteUser });
+    // res.status(200).send({ message: `deleted user sucessfully at ID:${id}`,user:deleteUser });
+    return res.status(401).send({
+      status:1,
+      message:`deleted user sucessfully at ID:${id}`,
+      user: deleteUser
+    });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
     res.send({ Error: err.message });
