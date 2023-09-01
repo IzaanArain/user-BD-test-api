@@ -8,8 +8,8 @@ router.get('/',user_token_auth,getAllUsers);
 router.post("/create",addUser);
 router.post("/login",loginUser);
 router.get('/:id',user_token_auth,getUser);
-router.put("/update/:id",user_token_auth,updateUser);
-router.delete("/delete/:id",user_token_auth,deleteUser);
+router.put("/update",user_token_auth,updateUser);
+router.delete("/delete",user_token_auth,deleteUser);
 
 
 module.exports=router;

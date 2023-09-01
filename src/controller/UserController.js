@@ -1,9 +1,9 @@
 const Users = require("../models/UserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 //Create Token function
 const createToken = (_id) => {
-  // console.log(process.env.SECRET_TOKEN)
   return jwt.sign({ _id: _id }, process.env.SECRET_TOKEN, { expiresIn: "1d" });
 };
 
@@ -25,6 +25,7 @@ const getAllUsers = async (req, res) => {
 //@access Private
 const getUser = async (req, res) => {
   const { id } = req.params;
+  // const {id}=req;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(404);
@@ -36,15 +37,15 @@ const getUser = async (req, res) => {
       res.status(404);
       throw new Error("User not found");
     }
-    if (user._id.toString() !== req.id.toString()) {
+    if (user._id.toString() !== id.toString()) {
       res.status(403);
       throw new Error("you is not authorized view this user");
     }
 
     return res.status(200).send({
-      status:1,
-      message:"user created successfully",
-      user
+      status: 1,
+      message: "user created successfully",
+      user,
     });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
@@ -67,11 +68,25 @@ const addUser = async (req, res) => {
       res.status(400);
       throw new Error("user is already registered");
     }
-
-    //hash password
+    // let test=password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/)
+    // console.log("test: ",test);
+    // res.status(200).send({message:"testing....",match_test:test,password})
+    if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+      res.status(400);
+      throw new Error("not a valid Email");
+    }
+    if (
+      !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
+      res.status(400);
+      throw new Error("not a valid password");
+    }
+    if (!phone.match(/^[0-9]{11}$/)) {
+      res.status(400);
+      throw new Error("Phone number must have 11 digits");
+    }
+    // hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    // console.log("hashed Password:",hashedPassword)
 
     const user = await Users.create({
       name,
@@ -81,11 +96,11 @@ const addUser = async (req, res) => {
       status,
       isBlocked,
     });
-    // res.status(200).send({ message: "user created successfully", user });
-   return res.status(200).send({
-      status:1,
-      message:"user created successfully",
-      user
+
+    return res.status(200).send({
+      status: 1,
+      message: "user created successfully",
+      user,
     });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
@@ -102,12 +117,20 @@ const loginUser = async (req, res) => {
       res.status(401);
       throw new Error("both email and password are mandatory");
     }
-
+    if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+      res.status(400);
+      throw new Error("not a valid Email");
+    }
+    // if (
+    //   !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
+    //   res.status(400);
+    //   throw new Error("not a valid password");
+    // }
     const user = await Users.findOne({ email });
-    //  console.log(user)
+
     if (!user) {
       res.status(400);
-      throw new Error("user not found");
+      throw new Error("user does not exist");
     }
 
     //compare password with hashed password
@@ -118,22 +141,22 @@ const loginUser = async (req, res) => {
       throw Error("Incorrecrt password");
     }
     //create token
-    const token = createToken(user._id);
+    const token = createToken(user?._id);
     // console.log("token: ",token)
 
     //save token by updating userAuth in user
     const save_token = await Users.findByIdAndUpdate(
-      { _id: user?._id?.toString() }, //user._id
-      { $set: { userAuth: `${token}` } }, // {...req.body,userAuth:save_token}}
+      { _id: user?._id?.toString() },
+      { userAuth: token },
       { new: true }
     );
-    console.log(save_token);
+    // console.log(save_token);
 
     if (user) {
       res.status(200).send({
         message: "login successful",
         status: 200,
-        user,
+        user: save_token,
       });
     } else {
       res.send({
@@ -151,7 +174,7 @@ const loginUser = async (req, res) => {
 //@access Private
 const updateUser = async (req, res) => {
   // const {id}=req.params;
-  const {id}=req.id
+  const { id } = req;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(404);
@@ -164,24 +187,25 @@ const updateUser = async (req, res) => {
       throw new Error("User not found");
       // return res.status(401).send({
       //   status:1,
-      //   message:'user not authorized',   
+      //   message:'user not authorized',
       // })
     }
-    if (user._id.toString() !== req.id.toString()) {
+    console.log(user._id);
+    if (user._id.toString() !== id.toString()) {
       res.status(403);
       throw new Error("user is not authorized to delete this event");
     }
-    const updateUser=await Users.findByIdAndUpdate(
-      {_id:id},
-      {...req.body},
-      {new:true}
+    const updateUser = await Users.findByIdAndUpdate(
+      { _id: id },
+      { ...req.body },
+      { new: true }
     );
 
     return res.status(200).send({
-      status:1,
-      message:'user has been updated',
-      data: updateUser
-    })
+      status: 1,
+      message: "user has been updated",
+      data: updateUser,
+    });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
     res.send({ Error: err.message });
@@ -193,7 +217,8 @@ const updateUser = async (req, res) => {
 //@access Private
 const deleteUser = async (req, res) => {
   // const { id } = req.params;
-  const {id}=req.id
+  const { id } = req;
+  console.log("delete id:", id);
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(404);
@@ -210,15 +235,15 @@ const deleteUser = async (req, res) => {
       throw new Error("user is not authorized to delete this event");
     }
 
-    const deleteUser = await Users.findByIdAndDelete({ id });
+    const deleteUser = await Users.findByIdAndDelete({ _id: id });
     // res.status(200).send({ message: `deleted user sucessfully at ID:${id}`,user:deleteUser });
     return res.status(401).send({
-      status:1,
-      message:`deleted user sucessfully at ID:${id}`,
-      user: deleteUser
+      status: 1,
+      message: `deleted user sucessfully at ID:${id}`,
+      user: deleteUser,
     });
   } catch (err) {
-    console.error("Error", `${err.message}`.red);
+    console.error("Error", `${err}`.red);
     res.send({ Error: err.message });
   }
 };
