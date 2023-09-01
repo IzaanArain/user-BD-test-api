@@ -55,7 +55,7 @@ const getUser = async (req, res) => {
 
 //@desc add a user
 //@route POST /api/v1/users/create
-//@access Private
+//@access public
 const addUser = async (req, res) => {
   const { name, email, password, phone, status, isBlocked } = req.body;
   try {
