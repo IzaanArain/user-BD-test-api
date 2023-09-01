@@ -69,8 +69,8 @@ const addUser = async (req, res) => {
       throw new Error("user is already registered");
     }
     // let test=password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/)
-    // console.log("test: ",test);
-    // res.status(200).send({message:"testing....",match_test:test,password})
+    // console.log("test: ",test);// this returns null if it does not match
+
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
       throw new Error("not a valid Email");
@@ -208,7 +208,7 @@ const updateUser = async (req, res) => {
       res.status(400);
       throw new Error("Phone number must have 11 digits");
     }
-    
+
     const updateUser = await Users.findByIdAndUpdate(
       { _id: id },
       { ...req.body },
