@@ -2,6 +2,7 @@ const Users = require("../models/UserModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const { byte } = require("webidl-conversions");
 //Create Token function
 const createToken = (_id) => {
   return jwt.sign({ _id: _id }, process.env.SECRET_TOKEN, { expiresIn: "1d" });
@@ -73,7 +74,7 @@ const getUser = async (req, res) => {
 
     return res.status(200).send({
       status: 1,
-      message: "user created successfully",
+      message: "user successfully fetched",
       user,
     });
   } catch (err) {
@@ -183,10 +184,12 @@ const loginUser = async (req, res) => {
 
     //compare password with hashed password
     const matchPassword = await bcrypt.compare(password, user.password);
+    // console.log(password)
+    // console.log(user.password)
     // console.log("matchPassword",matchPassword);
     if (!matchPassword) {
       res.status(400);
-      throw Error("Incorrecrt password");
+      throw Error("Incorrect password");
     }
     //create token
     const token = createToken(user?._id);
@@ -230,6 +233,7 @@ const loginUser = async (req, res) => {
 //@access Private
 const updateUser = async (req, res) => {
   // const {id}=req.params;
+  const {name,email,password,phone}=req.body
   const { id } = req;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -246,13 +250,25 @@ const updateUser = async (req, res) => {
       //   message:'user not authorized',
       // })
     }
-    if (user._id.toString() !== id.toString()) {
+    if (user?._id.toString() !== id.toString()) {
       res.status(403);
       throw new Error("user is not authorized to update this user");
+    }
+    if (!name) {
+      res.status(401);
+      throw new Error("please enter your name");
+    }
+    if (!email) {
+      res.status(401);
+      throw new Error("please enter your email");
     }
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
       throw new Error("not a valid Email");
+    }
+    if (!password) {
+      res.status(401);
+      throw new Error("please enter your pasword");
     }
     if (
       !password.match(
@@ -262,21 +278,29 @@ const updateUser = async (req, res) => {
       res.status(400);
       throw new Error("not a valid password");
     }
+    if (!phone) {
+      res.status(401);
+      throw new Error("please enter your phone number");
+    }
     if (!phone.match(/^[0-9]{11}$/)) {
       res.status(400);
       throw new Error("Phone number must have 11 digits");
     }
 
+    // console.log("p: ",password)
+    const salt=await bcrypt.genSalt(10)
+    const hashedPassword=await bcrypt.hash(password,salt)
+    // console.log("h: ",hashedPassword)    
     const updateUser = await Users.findByIdAndUpdate(
       { _id: id },
-      { ...req.body },
+      { ...req.body,password:hashedPassword },
       { new: true }
     );
 
     return res.status(200).send({
       status: 1,
       message: "user has been updated",
-      data: updateUser,
+      user: updateUser,
     });
   } catch (err) {
     console.error("Error", `${err.message}`.red);
