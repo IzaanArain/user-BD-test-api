@@ -26,7 +26,7 @@ const user_token_auth = async (req, res, next) => {
       throw new Error(`Dear ${auth?.name} your account is temporaray blocked`);
     }
     const decoded = jwt.verify(token, process.env.SECRET_TOKEN);
-    console.log("decoded:", decoded._id);
+    // console.log("decoded:", decoded._id);
     req.id = decoded._id;
     next();
   } catch (err) {

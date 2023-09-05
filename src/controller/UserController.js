@@ -11,9 +11,38 @@ const createToken = (_id) => {
 //@route GET /api/v1/users/
 //@access Private
 const getAllUsers = async (req, res) => {
+  const { id } = req;
   try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(404);
+      throw new Error("invalid user id, no such user exists");
+    }
+    if (!id) {
+      res.status(404);
+      throw new Error("you must be login to view users");
+    }
+    const userCheck = await Users.findById(id);
+    if (!userCheck) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+    if (userCheck?._id.toString() !== id.toString()) {
+      res.status(403);
+      throw new Error("you is not authorized view this user");
+    }
     const user = await Users.find({}).sort({ createdAt: -1 });
-    res.status(200).send(user);
+    // res.status(200).send(user);
+    const userMap = user.map(
+      ({name, email, phone, createdAt, updatedAt }) => ({
+        name,
+        email,
+        phone,
+        createdAt,
+        updatedAt,
+      })
+    );
+    // console.log(userMap);
+    res.status(200).send(userMap);
   } catch (err) {
     console.error("Error", `${err.message}`.red);
     res.send({ Error: err.message });
@@ -37,7 +66,7 @@ const getUser = async (req, res) => {
       res.status(404);
       throw new Error("User not found");
     }
-    if (user._id.toString() !== id.toString()) {
+    if (user?._id.toString() !== id.toString()) {
       res.status(403);
       throw new Error("you is not authorized view this user");
     }
@@ -59,46 +88,44 @@ const getUser = async (req, res) => {
 const addUser = async (req, res) => {
   const { name, email, password, phone, status, isBlocked } = req.body;
   try {
-    if(!password){
+    if (!name) {
       res.status(401);
       throw new Error("please enter your name");
     }
-    if(!email){
+    if (!email) {
       res.status(401);
       throw new Error("please enter your email");
     }
-    if(!password){
-      res.status(401);
-      throw new Error("please enter your pasword");
-    }
-    if(!phone){
-      res.status(401);
-      throw new Error("please enter your phone number");
-    }
-    if (!name | !email | !password | !phone) {
-      res.status(401);
-      throw new Error("all fields are mandatory");
-    }
-    const userExists = await Users.findOne({ email });
-    if (userExists) {
-      res.status(400);
-      throw new Error("user is already registered");
-    }
-    // let test=password.match(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/)
-    // console.log("test: ",test);// this returns null if it does not match
-
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
       throw new Error("Please enter a valid email");
     }
+    if (!password) {
+      res.status(401);
+      throw new Error("please enter your pasword");
+    }
     if (
-      !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
+      !password.match(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      )
+    ) {
       res.status(400);
-      throw new Error("Password should include at least 8 characters, one uppercase letter, one lowercase letter, one digit, and one special character.");
+      throw new Error(
+        "Password should include at least 8 characters, one uppercase letter, one lowercase letter, one digit, and one special character."
+      );
+    }
+    if (!phone) {
+      res.status(401);
+      throw new Error("please enter your phone number");
     }
     if (!phone.match(/^[0-9]{11}$/)) {
       res.status(400);
       throw new Error("Phone number must have 11 digits");
+    }
+    const userExists = await Users.findOne({ email });
+    if (userExists) {
+      res.status(400);
+      throw new Error("user email is already registered, use another email");
     }
     // hash password
     const salt = await bcrypt.genSalt(10);
@@ -130,21 +157,17 @@ const addUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
-    if(!email){
+    if (!email) {
       res.status(401);
       throw new Error("please enter email");
-    }
-    if(!password){
-      res.status(401);
-      throw new Error("please enter password");
-    }
-    if (!email | !password) {
-      res.status(401);
-      throw new Error("both email and password are mandatory");
     }
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
       throw new Error("not a valid Email");
+    }
+    if (!password) {
+      res.status(401);
+      throw new Error("please enter password");
     }
     // if (
     //   !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
@@ -218,26 +241,17 @@ const updateUser = async (req, res) => {
     }
     if (user._id.toString() !== id.toString()) {
       res.status(403);
-      throw new Error("user is not update this user");
-    }
-    if(!password){
-      res.status(401);
-      throw new Error("please enter your name");
-    }
-    if(!email){
-      res.status(401);
-      throw new Error("please enter your email");
-    }
-    if(!password){
-      res.status(401);
-      throw new Error("please enter your pasword");
+      throw new Error("user is not authorized to update this user");
     }
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       res.status(400);
       throw new Error("not a valid Email");
     }
     if (
-      !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
+      !password.match(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      )
+    ) {
       res.status(400);
       throw new Error("not a valid password");
     }
