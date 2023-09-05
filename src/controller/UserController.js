@@ -53,8 +53,8 @@ const getAllUsers = async (req, res) => {
 //@route GET /api/v1/users/:id
 //@access Private
 const getUser = async (req, res) => {
-  const { id } = req.params;
-  // const {id}=req;
+  // const { id } = req.params;
+  const {id}=req;
   try {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(404);
@@ -204,7 +204,14 @@ const loginUser = async (req, res) => {
       res.status(200).send({
         message: "login successful",
         status: 200,
-        user: save_token,
+        user: {
+          name:save_token.name,
+          email:save_token.email,
+          userAuth:save_token.userAuth,
+          phone:save_token.phone,
+          createdAt:save_token.createdAt,
+          updatedAt:save_token.updatedAt
+        },
       });
     } else {
       res.send({
