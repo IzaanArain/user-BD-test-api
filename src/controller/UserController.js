@@ -333,7 +333,7 @@ const deleteUser = async (req, res) => {
 
     const deleteUser = await Users.findByIdAndDelete({ _id: id });
     // res.status(200).send({ message: `deleted user sucessfully at ID:${id}`,user:deleteUser });
-    return res.status(401).send({
+    return res.status(200).send({
       status: 1,
       message: `deleted user sucessfully at ID:${id}`,
       user: deleteUser,
