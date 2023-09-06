@@ -159,27 +159,51 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
     if (!email) {
-      res.status(401);
-      throw new Error("please enter email");
+      // res.status(401);
+      // throw new Error("please enter email");
+      console.error("Error","please enter email".red);
+      return res.status(401).send({
+        message:"please enter email",
+        status:401
+      })
     }
     if (!email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
-      res.status(400);
-      throw new Error("not a valid Email");
+      // res.status(400);
+      // throw new Error("not a valid Email");
+      console.error("Error","not a valid Email".red);
+      return res.status(400).send({
+        message:"not a valid Email",
+        status:401
+      })
     }
     if (!password) {
-      res.status(401);
-      throw new Error("please enter password");
+      // res.status(401);
+      // throw new Error("please enter password");
+      console.error("Error","please enter password".red);
+      return res.status(401).send({
+        meassage:"please enter password",
+        status:401
+      })
     }
-    // if (
-    //   !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
-    //   res.status(400);
-    //   throw new Error("not a valid password");
-    // }
+    if (
+      !password.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
+      // res.status(400);
+      // throw new Error("not a valid password");
+      console.error("Error","not a valid password".red);
+      return res.status(400).send({
+        message:"not a valid password",
+        status:400
+      })
+    }
     const user = await Users.findOne({ email });
 
     if (!user) {
-      res.status(400);
-      throw new Error("user does not exist");
+      // res.status(400);
+      // throw new Error("user does not exist");
+      return res.status(400).send({
+        message:"user does not exist",
+        status:400
+      })
     }
 
     //compare password with hashed password
@@ -188,8 +212,12 @@ const loginUser = async (req, res) => {
     // console.log(user.password)
     // console.log("matchPassword",matchPassword);
     if (!matchPassword) {
-      res.status(400);
-      throw Error("Incorrect password");
+      // res.status(400);
+      // throw Error("Incorrect password");
+      return res.status(400).send({
+        message:"Incorrect password",
+        status:400
+      })
     }
     //create token
     const token = createToken(user?._id);
@@ -243,12 +271,12 @@ const updateUser = async (req, res) => {
 
     const user = await Users.findById(id);
     if (!user) {
-      res.status(404);
-      throw new Error("User not found");
-      // return res.status(401).send({
-      //   status:1,
-      //   message:'user not authorized',
-      // })
+      // res.status(404);
+      // throw new Error("User not found");
+      return res.status(404).send({
+        status:1,
+        message:'user not found',
+      })
     }
     if (user?._id.toString() !== id.toString()) {
       res.status(403);
