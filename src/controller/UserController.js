@@ -200,6 +200,7 @@ const loginUser = async (req, res) => {
     if (!user) {
       // res.status(400);
       // throw new Error("user does not exist");
+      console.error("Error","user does not exist".red);
       return res.status(400).send({
         message:"user does not exist",
         status:400
@@ -251,8 +252,12 @@ const loginUser = async (req, res) => {
       });
     }
   } catch (err) {
+    console.error("Status: ",`${err.status}`)
     console.error("Error", `${err.message}`.red);
-    res.send({ Error: err.message });
+    res.status(500).send({
+      status:0,
+      message:"Something went wrong", 
+      Error: `${err.status} ${err.message}` });
   }
 };
 
